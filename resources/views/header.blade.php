@@ -269,7 +269,7 @@
           <div class="navbar-brand">
                 <i class="fa fa-bars hide-phone" style="width:32px;padding-top:2px;float:left"></i>
                 {{-- Per our license, please do not remove or modify this link. --}}
-                <img src="{{ asset('images/invoiceninja-logo.png') }}" width="193" height="25" style="float:left"/>
+                <img src="{{ asset('images/taipan_cnc_v2.png') }}" width="40" height="30" style="float:left;margin-top:-5px;margin-right: 2px"/>Taipan CMP
           </div>
       </a>
     </div>
