@@ -17,7 +17,7 @@
 | loading any of our classes later on. It feels nice to relax.
 |
 */
-require '/var/www/html/erp.taipancnc.co.nz/bootstrap/autoload.php';
+require '/var/www/html/erp.taipancnc.co.nz/vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
