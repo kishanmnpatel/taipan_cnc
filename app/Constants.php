@@ -29,6 +29,7 @@ if (! defined('APP_NAME')) {
     define('ENTITY_TOKEN', 'token');
     define('ENTITY_TAX_RATE', 'tax_rate');
     define('ENTITY_PRODUCT', 'product');
+    define('ENTITY_RAW_MATERIAL', 'raw_material');
     define('ENTITY_ACTIVITY', 'activity');
     define('ENTITY_VENDOR', 'vendor');
     define('ENTITY_VENDOR_ACTIVITY', 'vendor_activity');

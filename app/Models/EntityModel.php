@@ -332,6 +332,7 @@ class EntityModel extends Eloquent
             'dashboard' => 'tachometer',
             'clients' => 'users',
             'products' => 'cube',
+            'raw_materials' => 'cube',
             'invoices' => 'file-pdf-o',
             'payments' => 'credit-card',
             'recurring_invoices' => 'files-o',

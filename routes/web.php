@@ -272,6 +272,10 @@ Route::group(['middleware' => ['lookup:user', 'auth:user']], function () {
     Route::resource('products', 'ProductController');
     Route::post('products/bulk', 'ProductController@bulk');
 
+    Route::resource('raw_materials', 'RawMaterialController');
+    Route::get('api/raw_materials', 'RawMaterialController@getDatatable');
+    Route::post('raw_materials/bulk', 'RawMaterialController@bulk');
+
     Route::get('/resend_confirmation', 'AccountController@resendConfirmation');
     Route::post('/update_setup', 'AppController@updateSetup');
 
