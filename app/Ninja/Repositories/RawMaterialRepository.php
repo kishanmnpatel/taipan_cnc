@@ -46,7 +46,7 @@ class RawMaterialRepository extends BaseRepository
             });
         }
 
-        $this->applyFilters($query, ENTITY_PRODUCT);
+        $this->applyFilters($query, ENTITY_RAW_MATERIAL);
 
         return $query;
     }
