@@ -2,10 +2,11 @@
 
 namespace App\Ninja\Datatables;
 
-use Auth;
 use Str;
 use URL;
+use Auth;
 use Utils;
+use App\Models\Vendor;
 
 class RawMaterialDatatable extends EntityDatatable
 {
@@ -44,7 +45,8 @@ class RawMaterialDatatable extends EntityDatatable
             [
                 'supplier',
                 function ($model) {
-                    return $model->supplier;
+                    $vendor=Vendor::scope($model->supplier)->withTrashed()->first();
+                    return $vendor->name;
                 },
             ]
         ];

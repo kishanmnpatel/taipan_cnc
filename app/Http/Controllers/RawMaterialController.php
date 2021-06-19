@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use View;
+use Utils;
+use Session;
+use App\Models\Vendor;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use Illuminate\Http\Request;
 use App\Services\RawMaterialService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Input;
-use Session;
-use Utils;
 use App\Ninja\Datatables\RawMaterialDatatable;
 use App\Http\Requests\UpdateRawMaterialRequest;
 use App\Ninja\Repositories\RawMaterialRepository;
@@ -72,7 +73,9 @@ class RawMaterialController extends Controller
 
         $account = Auth::user()->account;
 
+        $vendors = Vendor::where('vendors.user_id', '=', Auth::user()->id)->get()->pluck('name','id');
         $data = [
+          'vendors' => $vendors,
           'product' => null,
           'method' => 'POST',
           'url' => 'raw_materials',
@@ -135,16 +138,18 @@ class RawMaterialController extends Controller
 
         $account = Auth::user()->account;
         $rawMaterial = RawMaterial::scope($rawMaterial_id)->withTrashed()->firstOrFail();
+        $vendors = Vendor::where('vendors.user_id', '=', Auth::user()->id)->get()->pluck('name','id');
         
         $url = 'raw_materials/'.$rawMaterial_id;
         $method = 'PUT';
 
         $data = [
-          'product' => $rawMaterial,
-          'entity' => $rawMaterial,
-          'method' => $method,
-          'url' => $url,
-          'title' => trans('texts.edit_raw_material'),
+            'vendors' => $vendors,
+            'product' => $rawMaterial,
+            'entity' => $rawMaterial,
+            'method' => $method,
+            'url' => $url,
+            'title' => trans('texts.edit_raw_material'),
         ];
         return View::make('accounts.raw_material', $data);
     }

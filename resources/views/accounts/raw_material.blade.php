@@ -31,7 +31,9 @@
 
                     {!! Former::text('cost') !!}
                     {!! Former::text('qty') !!}
-                    {!! Former::text('supplier') !!}
+                    {!! Former::select('supplier')
+                                ->options($vendors)
+                                ->select(isset($product) ? $product->supplier : '') !!}
 
                     {{-- @if ($account->invoice_item_taxes)
                         @include('partials.tax_rates')
@@ -76,7 +78,7 @@
     <script type="text/javascript">
 
         $(function() {
-            $('#product_key').focus();
+            $('#raw_material_key').focus();
         });
 
         function submitAction(action) {
