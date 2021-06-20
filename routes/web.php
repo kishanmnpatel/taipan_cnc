@@ -269,6 +269,9 @@ Route::group(['middleware' => ['lookup:user', 'auth:user']], function () {
 
     Route::get('products/{products}/clone', 'ProductController@cloneProduct');
     Route::get('api/products', 'ProductController@getDatatable');
+    Route::get('api/raw_products', 'ProductController@getDatatableRawMaterials');
+    Route::get('api/raw_products/delete', 'ProductController@deleteRawMaterials');
+    Route::get('api/raw_products/edit/{id}', 'ProductController@editRawMaterials');
     Route::resource('products', 'ProductController');
     Route::post('products/bulk', 'ProductController@bulk');
 

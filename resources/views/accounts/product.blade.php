@@ -32,10 +32,20 @@
 
                     {!! Former::text('cost') !!}
 
+                    {!! Former::text('bom_cost')->value($bom_cost)->readonly()->label('Buy Price') !!}
+
                     @if ($account->invoice_item_taxes)
                         @include('partials.tax_rates')
                     @endif
-
+                    @php
+                        $queryString=request()->route()->getName() == 'products.edit' ? $product->id : '';
+                    @endphp
+                    Bill Of Materials
+                    {!! Datatable::table()
+                        ->addColumn('part_name','cost','supplier','qty','actions')       // these are the column headings to be shown
+                        ->setUrl(asset('/api/raw_products?getId='.$queryString))   // this is the route where data will be retrieved
+                        ->render() !!}
+                    <button type="button" class="addPart btn btn-primary btn-sm pull-right">Add Part</button>
                 </div>
             </div>
         </div>
@@ -75,10 +85,62 @@
     @endif
     {!! Former::close() !!}
 
+    <div id="addPartModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+         <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Add Part</h4>
+                 {{-- <button type="button" class="close" data-dismiss="modal">&times;</button> --}}
+               </div>
+               <div class="modal-body">
+                <form id="addPartForm" method="GET" action="{{asset('products/create')}}" class="form-horizontal">
+                 {{ csrf_field() }}
+                 {!!Former::hidden('product_raw_id')->value(null)->addClass('product_raw_id') !!}
+                 {!! Former::select('product_raw_material_id')
+                    ->addOption('','')
+                    ->fromQuery($products, 'raw_material_key', 'id')
+                    ->addGroupClass('payment-type-select')->addClass('material_id') !!}
+
+                {!! Former::text('raw_notes')->addClass('material_notes') !!}
+                {!! Former::text('qty')->addClass('material_qty') !!}
+
+      <br>
+                  <div class="form-group" align="center">
+                   <input type="submit" id="addPartModalSubmitButton" class="btn btn-success" value="Submit" />
+                  </div>
+                </form>
+               </div>
+            </div>
+           </div>
+       </div>
+
     <script type="text/javascript">
 
         $(function() {
             $('#product_key').focus();
+            $(document).on('click', '.addPart', function(){
+                $('#addPartForm')[0].reset(); 
+                $('#addPartModal').modal('show');
+            });
+            $(document).on('click', '.editPart', function(){
+                $('#addPartForm')[0].reset(); 
+                var id=$(this).attr('id');
+                $.ajax({  
+                     url:"{{asset('api/raw_products/edit')}}/"+id,  
+                     method:"GET",
+                     success:function(data){ 
+                         console.log(data);
+                         $('.product_raw_id').val(id);
+                         $('.material_id').val(data.raw_material_id);
+                         $('.material_notes').val(data.notes);
+                         $('.material_qty').val(data.qty);
+                     },
+                     error:function(data){
+                        console.log(data);
+                     }
+                }); 
+                $('#addPartModal').modal('show');
+            });
         });
 
         function submitAction(action) {

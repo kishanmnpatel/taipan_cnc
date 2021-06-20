@@ -29,6 +29,7 @@ if (! defined('APP_NAME')) {
     define('ENTITY_TOKEN', 'token');
     define('ENTITY_TAX_RATE', 'tax_rate');
     define('ENTITY_PRODUCT', 'product');
+    define('ENTITY_PRODUCT_RAW_MATERIAL', 'product_raw_material');
     define('ENTITY_RAW_MATERIAL', 'raw_material');
     define('ENTITY_ACTIVITY', 'activity');
     define('ENTITY_VENDOR', 'vendor');
@@ -57,6 +58,7 @@ if (! defined('APP_NAME')) {
         ENTITY_INVOICE,
         ENTITY_PAYMENT,
         ENTITY_PRODUCT,
+        ENTITY_RAW_MATERIAL,
         ENTITY_PROJECT,
         ENTITY_PROPOSAL,
         ENTITY_QUOTE,

@@ -2,22 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateProductRequest;
-use App\Http\Requests\UpdateProductRequest;
-use App\Http\Requests\ProductRequest;
+use URL;
+use Auth;
+use View;
+use Input;
+use Utils;
+use Session;
+use Redirect;
+use Datatable;
+use App\Models\Vendor;
 use App\Models\Product;
 use App\Models\TaxRate;
-use App\Ninja\Datatables\ProductDatatable;
-use App\Ninja\Repositories\ProductRepository;
+use App\Models\RawMaterial;
+use App\Http\Requests\Request;
 use App\Services\ProductService;
-use Auth;
+use App\Models\ProductRawMaterials;
+use App\Http\Requests\ProductRequest;
+use Illuminate\Support\Facades\Cache;
+use App\Ninja\Datatables\ProductDatatable;
+use Google\Cloud\BigQuery\Connection\Rest;
+use App\Http\Requests\CreateProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Ninja\Repositories\ProductRepository;
 use Illuminate\Auth\Access\AuthorizationException;
-use Input;
-use Redirect;
-use Session;
-use URL;
-use Utils;
-use View;
 
 /**
  * Class ProductController.
@@ -102,6 +109,7 @@ class ProductController extends BaseController
             $url = 'products/'.$publicId;
             $method = 'PUT';
         }
+        $bom_cost=ProductRawMaterials::where(['user_id'=>Auth::user()->id,'account_id'=>Auth::user()->account->id,'product_id'=>$product->id])->sum('total_cost');
 
         $data = [
           'account' => $account,
@@ -110,10 +118,75 @@ class ProductController extends BaseController
           'entity' => $product,
           'method' => $method,
           'url' => $url,
+          'products' => RawMaterial::scope()->orderBy('raw_material_key')->get(),
+          'product_raw_material_id' => Input::get('product_raw_material_id'),
+          'bom_cost'=>$bom_cost,
           'title' => trans('texts.edit_product'),
         ];
 
         return View::make('accounts.product', $data);
+    }
+
+    public function getDatatableRawMaterials(ProductRequest $request)
+    {
+        $user = Auth::user();
+        $account = Auth::user()->account;
+        $tableData=ProductRawMaterials::where(['user_id'=>$user->id,'account_id'=>$account->id,'product_id'=>null])->get();
+
+        if (Input::get('getId') != '' || Input::get('getId') != null) {
+            $tableData=ProductRawMaterials::where(['user_id'=>$user->id,'account_id'=>$account->id,'product_id'=>Input::get('getId')])->get();
+        }
+        
+        return Datatable::collection($tableData)
+                        ->addColumn('part_name',function($model)
+                            {
+                                return $model->product_raw_material_key;
+                            }
+                        )
+                        ->addColumn('cost',function($model)
+                            {
+                                return $model->cost;
+                            }
+                        )
+                        ->addColumn('supplier',function($model)
+                            {
+                                $supplier_id=RawMaterial::scope($model->raw_material_id)->first()->supplier;
+                                $vendor=Vendor::scope($supplier_id)->withTrashed()->first();
+                                return $vendor->name;
+                            }
+                        )
+                        ->addColumn('qty',function($model)
+                            {
+                                return $model->qty;
+                            }
+                        )
+                        ->addColumn('actions',function($model)
+                            {
+                                return '
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <button type="button" class="editPart btn btn-warning btn-sm pull-right" id="'.$model->id.'">Edit Part</button>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a class="btn btn-danger btn-sm" href="'.asset('api/raw_products/delete').'?id='.$model->id.'">Remove</a>
+                                    </div>
+                                </div>
+                                ';
+                            }
+                        )
+                        ->make();
+    }
+
+    public function deleteRawMaterials()
+    {
+        ProductRawMaterials::where(['id'=>Input::get('id')])->delete();
+        return redirect()->back();
+    }
+
+    public function editRawMaterials($id)
+    {
+        $productRawMaterial = ProductRawMaterials::where('id',$id)->first();
+        return $productRawMaterial;
     }
 
     /**
@@ -121,14 +194,44 @@ class ProductController extends BaseController
      */
     public function create(ProductRequest $request)
     {
-
+        $user = Auth::user();
         $account = Auth::user()->account;
+        if (!empty(Input::get('product_raw_material_id'))) {
+            $inputId=Input::get('product_raw_material_id');
+            if(ProductRawMaterials::where(['user_id'=>$user->id,'account_id'=>$account->id,'raw_material_id'=>$inputId,'product_id'=>null])->count() == 0)
+            {
+                $rawMaterial = RawMaterial::scope($inputId)->first();
+                $productRawMaterial=new ProductRawMaterials();
+            
+                $productRawMaterial->user_id = $user->id;
+                $productRawMaterial->account_id = $account->id;
+                $productRawMaterial->raw_material_id = $rawMaterial->id;
+                $productRawMaterial->product_raw_material_key = $rawMaterial->raw_material_key;
+                $productRawMaterial->notes = Input::get('raw_notes');
+                $productRawMaterial->cost = $rawMaterial->cost;
+                $productRawMaterial->total_cost = $rawMaterial->cost*Input::get('qty');
+                $productRawMaterial->qty = Input::get('qty');
+                $productRawMaterial->save();
+            }
 
+            if (Input::get('product_raw_id')!='' || Input::get('product_raw_id')!=null) {
+                $productRawMaterial = ProductRawMaterials::where('id',Input::get('product_raw_id'))->first();
+                $productRawMaterial->notes = Input::get('raw_notes');
+                $productRawMaterial->total_cost = $productRawMaterial->cost*Input::get('qty');
+                $productRawMaterial->qty = Input::get('qty');
+                $productRawMaterial->save();
+            }
+            return redirect(url()->previous());
+        }
+        $bom_cost=ProductRawMaterials::where(['user_id'=>$user->id,'account_id'=>$account->id,'product_id'=>null])->sum('total_cost');
         $data = [
           'account' => $account,
           'taxRates' => $account->invoice_item_taxes ? TaxRate::scope()->whereIsInclusive(false)->get(['id', 'name', 'rate']) : null,
           'product' => null,
           'method' => 'POST',
+          'products' => RawMaterial::scope()->orderBy('raw_material_key')->get(),
+          'product_raw_material_id' => Input::get('product_raw_material_id'),
+          'bom_cost'=>$bom_cost,
           'url' => 'products',
           'title' => trans('texts.create_product'),
         ];
@@ -176,7 +279,13 @@ class ProductController extends BaseController
         if (in_array($action, ['archive', 'delete', 'restore', 'invoice'])) {
             return self::bulk();
         }
-
+        if (ProductRawMaterials::where(['user_id'=>Auth::user()->id,'account_id'=>Auth::user()->account->id,'product_id'=>null])->count() != 0) {
+            $list=ProductRawMaterials::where(['user_id'=>Auth::user()->id,'account_id'=>Auth::user()->account->id,'product_id'=>null])->get();
+            $list->each(function(ProductRawMaterials $productRawMaterials) use($product){
+                $productRawMaterials->product_id=$product->id;
+                $productRawMaterials->save();
+            });
+        }
         if ($action == 'clone') {
             return redirect()->to(sprintf('products/%s/clone', $product->public_id));
         } else {
