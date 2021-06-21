@@ -196,6 +196,7 @@ class ProductController extends BaseController
     {
         $user = Auth::user();
         $account = Auth::user()->account;
+        // dd(Input::get('product_raw_material_id'));
         if (!empty(Input::get('product_raw_material_id'))) {
             $inputId=Input::get('product_raw_material_id');
             if(ProductRawMaterials::where(['user_id'=>$user->id,'account_id'=>$account->id,'raw_material_id'=>$inputId,'product_id'=>null])->count() == 0)
@@ -207,16 +208,18 @@ class ProductController extends BaseController
                 $productRawMaterial->account_id = $account->id;
                 $productRawMaterial->raw_material_id = $rawMaterial->id;
                 $productRawMaterial->product_raw_material_key = $rawMaterial->raw_material_key;
-                $productRawMaterial->notes = Input::get('raw_notes');
+                // $productRawMaterial->notes = Input::get('raw_notes');
                 $productRawMaterial->cost = $rawMaterial->cost;
                 $productRawMaterial->total_cost = $rawMaterial->cost*Input::get('qty');
                 $productRawMaterial->qty = Input::get('qty');
+                $productRawMaterial->save();
+                $productRawMaterial->public_id=$productRawMaterial->id;
                 $productRawMaterial->save();
             }
 
             if (Input::get('product_raw_id')!='' || Input::get('product_raw_id')!=null) {
                 $productRawMaterial = ProductRawMaterials::where('id',Input::get('product_raw_id'))->first();
-                $productRawMaterial->notes = Input::get('raw_notes');
+                // $productRawMaterial->notes = Input::get('raw_notes');
                 $productRawMaterial->total_cost = $productRawMaterial->cost*Input::get('qty');
                 $productRawMaterial->qty = Input::get('qty');
                 $productRawMaterial->save();

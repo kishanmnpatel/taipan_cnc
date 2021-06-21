@@ -30,9 +30,9 @@
 
                     @include('partials/custom_fields', ['entityType' => ENTITY_PRODUCT])
 
-                    {!! Former::text('cost') !!}
+                    {!! Former::text('cost')->label('Sell Price') !!}
 
-                    {!! Former::text('bom_cost')->value($bom_cost)->readonly()->label('Buy Price') !!}
+                    {!! Former::text('bom_cost')->value($bom_cost)->readonly()->label('Cost Box') !!}
 
                     @if ($account->invoice_item_taxes)
                         @include('partials.tax_rates')
@@ -96,12 +96,19 @@
                 <form id="addPartForm" method="GET" action="{{asset('products/create')}}" class="form-horizontal">
                  {{ csrf_field() }}
                  {!!Former::hidden('product_raw_id')->value(null)->addClass('product_raw_id') !!}
-                 {!! Former::select('product_raw_material_id')
+                 {{-- {!! Former::select('product_raw_material_id')
                     ->addOption('','')
                     ->fromQuery($products, 'raw_material_key', 'id')
-                    ->addGroupClass('payment-type-select')->addClass('material_id') !!}
+                    ->addGroupClass('payment-type-select')->addClass('material_id') !!} --}}
 
-                {!! Former::text('raw_notes')->addClass('material_notes') !!}
+                {!! Former::select('product_raw_material_id')
+                ->addOption('', '')
+                ->data_bind("dropdown: client, dropdownOptions: {highlighter: comboboxHighlighter}")
+                ->addClass('client-input')
+                ->addClass('material_id')
+                ->addGroupClass('client_select closer-row') !!}
+
+                {{-- {!! Former::text('raw_notes')->addClass('material_notes') !!} --}}
                 {!! Former::text('qty')->addClass('material_qty') !!}
 
       <br>
@@ -131,7 +138,14 @@
                      success:function(data){ 
                          console.log(data);
                          $('.product_raw_id').val(id);
-                         $('.material_id').val(data.raw_material_id);
+                         for (var i=0; i<clients.length; i++) {
+                            var client = clients[i];
+                            var clientName = client.raw_material_key || '';
+                            if (client.public_id === data.raw_material_id) {
+                                $('.material_id').val(clientName);
+                                $('input[name=product_raw_material_id]').val(client.public_id);
+                            }
+                        }
                          $('.material_notes').val(data.notes);
                          $('.material_qty').val(data.qty);
                      },
@@ -140,6 +154,31 @@
                      }
                 }); 
                 $('#addPartModal').modal('show');
+            });
+            var clients = {!! $products !!};
+            var clientMap = {};
+            var $clientSelect = $('select#product_raw_material_id');
+    
+            for (var i=0; i<clients.length; i++) {
+                var client = clients[i];
+                clientMap[client.public_id] = client;
+                var clientName = client.raw_material_key || '';
+                $clientSelect.append(new Option(clientName, client.public_id));
+            }
+
+            var $input = $('select#product_raw_material_id');
+            $input.combobox().on('change', function(e) {
+                var clientId = parseInt($('input[name=product_raw_material_id]').val(), 10) || 0;
+                if (clientId > 0) {
+                    var selected = clientMap[clientId];
+                    for (var i=0; i<clients.length; i++) {
+                        var client = clients[i];
+                        var clientName = client.raw_material_key || '';
+                        if (client.public_id === selected) {
+                            $('.client-input').val(clientName);
+                        }
+                    }
+                }
             });
         });
 
