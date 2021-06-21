@@ -41,10 +41,12 @@
                         $queryString=request()->route()->getName() == 'products.edit' ? $product->id : '';
                     @endphp
                     Bill Of Materials
-                    {!! Datatable::table()
-                        ->addColumn('part_name','cost','supplier','qty','actions')       // these are the column headings to be shown
-                        ->setUrl(asset('/api/raw_products?getId='.$queryString))   // this is the route where data will be retrieved
-                        ->render() !!}
+                    @if (request()->route()->getName() == 'products.edit')
+                        {!! Datatable::table()
+                            ->addColumn('part_name','cost','supplier','qty','actions')       // these are the column headings to be shown
+                            ->setUrl(asset('/api/raw_products?getId='.$queryString))   // this is the route where data will be retrieved
+                            ->render() !!}
+                    @endif
                     <button type="button" class="addPart btn btn-primary btn-sm pull-right">Add Part</button>
                 </div>
             </div>
