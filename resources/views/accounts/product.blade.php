@@ -109,7 +109,9 @@
                 ->addClass('client-input')
                 ->addClass('material_id')
                 ->addGroupClass('client_select closer-row') !!}
-
+                @if (request()->route()->getName() == 'products.edit')
+                    {!!Former::hidden('main_product_id')->value($product->id) !!}
+                @endif
                 {{-- {!! Former::text('raw_notes')->addClass('material_notes') !!} --}}
                 {!! Former::text('qty')->addClass('material_qty') !!}
 

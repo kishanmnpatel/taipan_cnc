@@ -196,7 +196,6 @@ class ProductController extends BaseController
     {
         $user = Auth::user();
         $account = Auth::user()->account;
-        // dd(Input::get('product_raw_material_id'));
         if (!empty(Input::get('product_raw_material_id'))) {
             $inputId=Input::get('product_raw_material_id');
             if(ProductRawMaterials::where(['user_id'=>$user->id,'account_id'=>$account->id,'raw_material_id'=>$inputId,'product_id'=>null])->count() == 0)
@@ -212,6 +211,9 @@ class ProductController extends BaseController
                 $productRawMaterial->cost = $rawMaterial->cost;
                 $productRawMaterial->total_cost = $rawMaterial->cost*Input::get('qty');
                 $productRawMaterial->qty = Input::get('qty');
+                if (Input::get('main_product_id')!='' || Input::get('main_product_id')!=null) {
+                    $productRawMaterial->product_id = Input::get('main_product_id');
+                }
                 $productRawMaterial->save();
                 $productRawMaterial->public_id=$productRawMaterial->id;
                 $productRawMaterial->save();
