@@ -15,8 +15,10 @@ if (! defined('APP_NAME')) {
     define('ENTITY_CLIENT', 'client');
     define('ENTITY_CONTACT', 'contact');
     define('ENTITY_INVOICE', 'invoice');
+    define('ENTITY_PURCHASE_ORDER', 'purchase_order');
     define('ENTITY_DOCUMENT', 'document');
     define('ENTITY_INVOICE_ITEM', 'invoice_item');
+    define('ENTITY_PURCHASE_ORDER_ITEM', 'purchase_order_item');
     define('ENTITY_INVITATION', 'invitation');
     define('ENTITY_RECURRING_INVOICE', 'recurring_invoice');
     define('ENTITY_PAYMENT', 'payment');

@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 // Application setup
 Route::get('/setup', 'AppController@showSetup');
 Route::post('/setup', 'AppController@doSetup');
@@ -205,6 +207,9 @@ Route::group(['middleware' => ['lookup:user', 'auth:user']], function () {
     Route::get('invoices/{invoices}/clone', 'InvoiceController@cloneInvoice');
     Route::post('invoices/bulk', 'InvoiceController@bulk');
     Route::post('recurring_invoices/bulk', 'InvoiceController@bulk');
+
+    Route::resource('purchase_orders', 'PurchaseOrderController');
+    Route::get('api/purchase_orders/{client_id?}', 'PurchaseOrderController@getDatatable');
 
     Route::get('recurring_expenses', 'RecurringExpenseController@index');
     Route::get('api/recurring_expenses', 'RecurringExpenseController@getDatatable');

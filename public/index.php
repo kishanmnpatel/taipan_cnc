@@ -17,7 +17,7 @@
 | loading any of our classes later on. It feels nice to relax.
 |
 */
-require '/var/www/html/erp.taipancnc.co.nz/vendor/autoload.php';
+require __DIR__.'/../bootstrap/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +31,7 @@ require '/var/www/html/erp.taipancnc.co.nz/vendor/autoload.php';
 |
 */
 
-$app = require_once '/var/www/html/erp.taipancnc.co.nz/bootstrap/app.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
 
 /*
 |--------------------------------------------------------------------------
