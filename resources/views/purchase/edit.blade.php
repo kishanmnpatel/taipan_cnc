@@ -65,15 +65,15 @@
         <div class="alert alert-danger">{{ trans($errors->first('invoice_items')) }}</div>
     @endif
 
-	@if ($invoice->id)
+	@if (isset($invoice->id))
 		<ol class="breadcrumb">
-		@if ($invoice->is_recurring)
+		{{-- @if ($invoice->is_recurring)
 			<li>{!! link_to('recurring_invoices', trans('texts.recurring_invoices')) !!}</li>
-		@else
-			<li>{!! link_to(($entityType == ENTITY_QUOTE ? 'quotes' : 'invoices'), trans('texts.' . ($entityType == ENTITY_QUOTE ? 'quotes' : 'invoices'))) !!}</li>
+		@else --}}
+			<li>{!! link_to(('purchase_orders'), trans('texts.purchase_orders')) !!}</li>
 			<li class="active">{{ $invoice->invoice_number }}</li>
-		@endif
-		@if ($invoice->is_recurring && $invoice->isSent())
+		{{-- @endif --}}
+		{{-- @if ($invoice->is_recurring && $invoice->isSent())
 			@if (! $invoice->last_sent_date || $invoice->last_sent_date == '0000-00-00')
 				{!! $invoice->present()->statusLabel(trans('texts.pending')) !!}
 			@elseif ($invoice->end_date && Carbon::parse(Utils::toSqlDate($invoice->end_date))->isPast())
@@ -81,9 +81,9 @@
 			@else
 				{!! $invoice->present()->statusLabel(trans('texts.active')) !!}
 			@endif
-		@else
+		@else --}}
 			{!! $invoice->present()->statusLabel !!}
-		@endif
+		{{-- @endif --}}
 		</ol>
 	@endif
 
@@ -111,28 +111,29 @@
     <div class="row" style="min-height:195px" onkeypress="formEnterClick(event)">
     	<div class="col-md-4" id="col_1">
 
-    		@if ($invoice->id || $data)
+    		@if (isset($invoice->id) || $data)
+			<input type="hidden" name="_method" value="PUT">
 				<div class="form-group">
 					<label for="client" class="control-label col-lg-4 col-sm-4"><b>{{ trans('texts.vendor') }}</b></label>
 					<div class="col-lg-8 col-sm-8">
                         <h4>
-                            <span data-bind="text: getClientDisplayName(ko.toJS(client()))"></span>
-                            @if ($invoice->client->is_deleted)
+                            <span >{{$invoice->vendor->name}}.</span>
+                            {{-- @if (isset($invoice->vendor->is_deleted))
                                 &nbsp;&nbsp;<div class="label label-danger">{{ trans('texts.deleted') }}</div>
-                            @endif
+                            @endif --}}
                         </h4>
 
-                        @can('view', $invoice->client)
-                            @can('edit', $invoice->client)
-                                <a id="editClientLink" class="pointer" data-bind="click: $root.showClientForm">{{ trans('texts.edit_supplier') }}</a> |
-                            @endcan
-                            {!! link_to('/clients/'.$invoice->client->public_id, trans('texts.view_supplier'), ['target' => '_blank']) !!}
-                        @endcan
+                        {{-- @can('view', $invoice->vendor) --}}
+                            {{-- @can('edit', $invoice->vendor) --}}
+                                {{-- <a id="editClientLink" class="pointer" data-bind="click: $root.showClientForm">{{ trans('texts.edit_supplier') }}</a> | --}}
+							{!! link_to('/vendors/'.$invoice->vendor->public_id.'/edit', trans('texts.edit_supplier'), ['target' => '_blank']) !!} |
+                            {{-- @endcan --}}
+                            {!! link_to('/vendors/'.$invoice->vendor->public_id, trans('texts.view_supplier'), ['target' => '_blank']) !!}
+                        {{-- @endcan --}}
 					</div>
 				</div>
 				<div style="display:none">
     		@endif
-
             {!! Former::select('client')
 					->addOption('', '')
 					->data_bind("dropdown: client, dropdownOptions: {highlighter: comboboxHighlighter}")
@@ -150,12 +151,11 @@
 					<a id="createClientLink" class="pointer" data-bind="click: $root.showClientForm, html: $root.clientLinkText"></a>
 					@endcan
                     <span data-bind="visible: $root.invoice().client().public_id() > 0" style="display:none">|
-                        <a data-bind="attr: {href: '{{ url('/clients') }}/' + $root.invoice().client().public_id()}" target="_blank">{{ trans('texts.view_supplier') }}</a>
+                        <a data-bind="attr: {href: '{{ url('/vendors') }}/' + $root.invoice().client().public_id()}" target="_blank">{{ trans('texts.view_supplier') }}</a>
                     </span>
 				</div>
 			</div>
-
-			@if ($invoice->id || $data)
+			@if (isset($invoice->id) || $data)
 				</div>
 			@endif
 
@@ -174,7 +174,7 @@
 								<br/>
 							</span>
                         </label>
-                        @if ( ! $invoice->is_deleted && ! $invoice->client->is_deleted)
+                        @if ( ! $invoice->is_deleted && ! isset($invoice->vendor->is_deleted))
                         <span data-bind="visible: !$root.invoice().is_recurring()">
                             <span data-bind="html: $data.view_as_recipient"></span>&nbsp;&nbsp;
                             @if (Utils::isConfirmed())
@@ -198,10 +198,10 @@
 		<div class="col-md-4" id="col_2">
 			<div data-bind="visible: !is_recurring()">
 				{!! Former::text('invoice_date')->data_bind("datePicker: invoice_date, valueUpdate: 'afterkeydown'")->label($account->getLabel("{$entityType}_date"))
-							->data_date_format(Session::get(SESSION_DATE_PICKER_FORMAT, DEFAULT_DATE_PICKER_FORMAT))->appendIcon('calendar')->addGroupClass('invoice_date')->label('Purchase Order Date') !!}
-				{!! Former::text('due_date')->data_bind("datePicker: due_date, valueUpdate: 'afterkeydown'")->label($account->getLabel($invoice->getDueDateLabel()))
-							->placeholder($invoice->id || $invoice->isQuote() ? ' ' : $account->present()->dueDatePlaceholder())
-							->data_date_format(Session::get(SESSION_DATE_PICKER_FORMAT, DEFAULT_DATE_PICKER_FORMAT))->appendIcon('calendar')->addGroupClass('due_date') !!}
+							->data_date_format('yyyy-mm-dd')->appendIcon('calendar')->addGroupClass('invoice_date')->label('Purchase Order Date') !!}
+				{!! Former::text('due_date')->data_bind("datePicker: due_date, valueUpdate: 'afterkeydown'")->label('due_date')
+							->placeholder(isset($invoice->id) || $account->present()->dueDatePlaceholder())
+							->data_date_format('yyyy-mm-dd')->appendIcon('calendar')->addGroupClass('due_date') !!}
 
 				{{-- <div class="form-group partial">
 					<label for="partial" class="control-label col-lg-4 col-sm-4">{{ trans('texts.partial') }}</label>
@@ -297,9 +297,9 @@
             @if ($entityType == ENTITY_INVOICE)
             <div class="form-group" style="margin-bottom: 8px">
                 <div class="col-lg-8 col-sm-8 col-sm-offset-4 smaller" style="padding-top: 10px;">
-                	@if ($invoice->recurring_invoice_id && $invoice->recurring_invoice)
-                        {!! trans('texts.created_by_invoice', ['invoice' => link_to('/invoices/'.$invoice->recurring_invoice->public_id, trans('texts.recurring_invoice'))]) !!} <p/>
-    				@elseif ($invoice->id)
+                	{{-- @if ($invoice->recurring_invoice_id && $invoice->recurring_invoice)
+                        {!! trans('texts.created_by_invoice', ['invoice' => link_to('/invoices/'.$invoice->recurring_invoice->public_id, trans('texts.recurring_invoice'))]) !!} <p/> --}}
+    				@if (isset($invoice->id))
                         @if (isset($lastSent) && $lastSent)
                             {!! trans('texts.last_sent_on', ['date' => link_to('/invoices/'.$lastSent->public_id, $invoice->last_sent_date, ['id' => 'lastSent'])]) !!} <p/>
                         @endif
@@ -482,7 +482,7 @@
 								<input type="hidden" name="document_ids[]" data-bind="value: public_id"/>
 							</div>
 						</div>
-						@if ($invoice->hasExpenseDocuments() || $expenses->count())
+						{{-- @if ($invoice->hasExpenseDocuments() || $expenses->count())
 							<h4>{{trans('texts.documents_from_expenses')}}</h4>
 							@foreach($invoice->expenses as $expense)
 								@if ($expense->invoice_documents)
@@ -498,7 +498,7 @@
 									@endforeach
 								@endif
 							@endforeach
-						@endif
+						@endif --}}
 					</div>
 				</div>
 				@endif
@@ -536,7 +536,7 @@
 			{!! Former::select('invoice_design_id')->style('display:inline;width:150px;background-color:white !important')->raw()->fromQuery($invoiceDesigns, 'name', 'id')->data_bind("value: invoice_design_id") !!}
 		@endif
 
-        @if ( $invoice->id && ! $invoice->is_recurring)
+        @if ( isset($invoice->id) && ! $invoice->is_recurring)
 		    {!! Button::primary(trans('texts.download'))
                     ->withAttributes(['onclick' => 'onDownloadClick()', 'id' => 'downloadPdfButton'])
                     ->appendIcon(Icon::create('download-alt')) !!}
@@ -545,30 +545,30 @@
         @if (Auth::user()->canCreateOrEdit(ENTITY_INVOICE, $invoice))
             @if ($invoice->isClientTrashed())
                 <!-- do nothing -->
-			@elseif ($invoice->isLocked())
+			{{-- @elseif ($invoice->isLocked())
 				@if (! $invoice->trashed())
 					{!! Button::info(trans("texts.email_purchase_order"))->withAttributes(array('id' => 'emailButton', 'onclick' => 'onEmailClick()'))->appendIcon(Icon::create('send')) !!}
 					{!! DropdownButton::normal(trans('texts.more_actions'))->withContents($invoice->present()->moreActions())->dropup() !!}
-				@endif
+				@endif --}}
             @else
 				@if (!$invoice->is_deleted)
 					@if ($invoice->isSent())
 						{!! Button::success(trans("texts.save_purchase_order"))->withAttributes(array('id' => 'saveButton', 'onclick' => 'onSaveClick()'))->appendIcon(Icon::create('floppy-disk')) !!}
 					@else
 						{!! Button::normal(trans("texts.save_draft"))->withAttributes(array('id' => 'draftButton', 'onclick' => 'onSaveDraftClick()'))->appendIcon(Icon::create('floppy-disk')) !!}
-						@if (! $invoice->trashed())
+						{{--@if (! $invoice->trashed())
 							{!! Button::success(trans($invoice->is_recurring ? "texts.mark_ready" : "texts.mark_sent"))->withAttributes(array('id' => 'saveButton', 'onclick' => 'onMarkSentClick()'))->appendIcon(Icon::create('globe')) !!}
-						@endif
-					@endif
-					@if (! $invoice->trashed())
+						@endif--}}
+					@endif 
+					{{-- @if (! $invoice->trashed())
 						{!! Button::info(trans("texts.email_purchase_order"))->withAttributes(array('id' => 'emailButton', 'onclick' => 'onEmailClick()'))->appendIcon(Icon::create('send')) !!}
-					@endif
-                    @if ($invoice->id)
+					@endif --}}
+                    @if (isset($invoice->id))
                         {!! DropdownButton::normal(trans('texts.more_actions'))->withContents($invoice->present()->moreActions())->dropup() !!}
-                    @elseif (! $invoice->isQuote() && Request::is('*/clone'))
+                    {{-- @elseif (! $invoice->isQuote() && Request::is('*/clone'))
                         {!! Button::normal(trans($invoice->is_recurring ? 'texts.disable_recurring' : 'texts.enable_recurring'))->withAttributes(['id' => 'recurrButton', 'onclick' => 'onRecurrClick()'])->appendIcon(Icon::create('repeat')) !!}
 					@elseif (! empty($tasks))
-						{!! Button::normal(trans('texts.add_product'))->withAttributes(['id' => 'addItemButton', 'onclick' => 'onAddItemClick()'])->appendIcon(Icon::create('plus-sign')) !!}
+						{!! Button::normal(trans('texts.add_product'))->withAttributes(['id' => 'addItemButton', 'onclick' => 'onAddItemClick()'])->appendIcon(Icon::create('plus-sign')) !!} --}}
                     @endif
         	    @endif
                 @if ($invoice->trashed())
@@ -809,7 +809,7 @@
 	</div>
 
 	@include('partials.email_templates')
-	@include('invoices.email')
+	@include('purchase.email')
 
     {!! Former::close() !!}
     </form>
@@ -845,7 +845,7 @@
         for (var i=0; i<clients.length; i++) {
             var client = clients[i];
             clientMap[client.public_id] = client;
-            @if (! $invoice->id)
+            @if (! isset($invoice->id))
 	            if (!getClientDisplayName(client)) {
 	                continue;
 	            }
@@ -876,13 +876,15 @@
             ko.mapping.fromJS(invoice, model.invoice().mapping, model.invoice);
             model.invoice().is_recurring({{ $invoice->is_recurring ? '1' : '0' }});
             model.invoice().start_date_orig(model.invoice().start_date());
-            @if ($invoice->id)
-                var invitationContactIds = {!! json_encode($invitationContactIds) !!};
-                var client = clientMap[invoice.client.public_id];
+            @if (isset($invoice->id))
+                $('.client-input-id').val(invoice.vendor.public_id);
+                refreshPDF(true);
+                // var invitationContactIds = {--!! json_encode($invitationContactIds) !!--};
+                var client = clientMap[invoice.vendor.public_id];
                 if (client) { // in case it's deleted
-                    for (var i=0; i<client.contacts.length; i++) {
-                        var contact = client.contacts[i];
-                        contact.send_invoice = invitationContactIds.indexOf(contact.public_id) >= 0;
+                    for (var i=0; i<client.length; i++) {
+                        var contact = client;
+                        // contact.send_invoice = invitationContactIds.indexOf(contact.public_id) >= 0;
                     }
                 }
                 model.invoice().addItem(); // add blank item
@@ -998,7 +1000,7 @@
 
 		$('#invoice_date, #due_date, #start_date, #end_date, #last_sent_date, #partial_due_date').datepicker();
 
-		@if ($invoice->client && !$invoice->id)
+		@if ($invoice->client && !isset($invoice->id))
 			$('input[name=client]').val({{ $invoice->client->public_id }});
 		@endif
 
@@ -1010,7 +1012,7 @@
                 var selected = clientMap[clientId];
 				model.loadClient(selected);
 				selectedClientId=clientId;
-        		onItemChange(true);
+        		applyComboboxListeners();
                 // we enable searching by contact but the selection must be the client
                 $('.client-input').val(getClientDisplayName(selected));
                 $('.client-input-id').val(clientId);
@@ -1058,7 +1060,7 @@
             })(field);
         }
 
-        if (model.invoice().client().public_id() || {{ $invoice->id || count($vendors) == 0 ? '1' : '0' }}) {
+        if (model.invoice().client().public_id() || {{ isset($invoice->id) || count($vendors) == 0 ? '1' : '0' }}) {
             // do nothing
         } else {
             $('.client_select input.form-control').focus();
@@ -1079,7 +1081,7 @@
 
 		$('label.radio').addClass('radio-inline');
 
-		@if ($invoice->client->id)
+		@if (isset($invoice->vendor->id))
 			$input.trigger('change');
 		@else
 			refreshPDF(true);
@@ -1181,7 +1183,7 @@
 			}
         }
 
-        @if (!$invoice->id || $invoice->is_recurring)
+        @if (!isset($invoice->id) || $invoice->is_recurring)
             if (!invoice.terms) {
                 invoice.terms = account['{{ $entityType }}_terms'];
             }
@@ -1441,26 +1443,27 @@
     }
 
 	function submitAction(value) {
-		if (!isSaveValid()) {
+		// if (!isSaveValid()) {
 
-			@if(Auth::user()->can('create', ENTITY_CLIENT))
-				model.showClientForm();
-				return false;
-			@else
-                showPermissionErrorModal();
-			@endif
+		// 	@if(Auth::user()->can('create', ENTITY_CLIENT))
+		// 		model.showClientForm();
+		// 		return false;
+		// 	@else
+        //         showPermissionErrorModal();
+		// 	@endif
 
-        }
+        // }
 
 		$('#action').val(value);
-		$('#submitButton').click();
+		// $('#submitButton').click();
+		$('.main-form').submit();
 	}
 
     function onFormSubmit(event) {
-        if (window.countUploadingDocuments > 0) {
-            swal({!! json_encode(trans('texts.wait_for_upload')) !!});
-            return false;
-        }
+        // if (window.countUploadingDocuments > 0) {
+        //     swal({!! json_encode(trans('texts.wait_for_upload')) !!});
+        //     return false;
+        // }
 
         @if ($invoice->is_deleted || $invoice->isClientTrashed())
             if ($('#bulk_action').val() != 'restore') {
@@ -1475,10 +1478,10 @@
             return false;
         }
 
-        if (!isSaveValid()) {
-            model.showClientForm();
-            return false;
-        }
+        // if (!isSaveValid()) {
+        //     model.showClientForm();
+        //     return false;
+        // }
 
         // check currency matches for expenses
         var expenseCurrencyId = model.expense_currency_id();
@@ -1488,7 +1491,7 @@
             return false;
         }
 
-        @if (Auth::user()->canCreateOrEdit(ENTITY_INVOICE, $invoice))
+        {{--@if (Auth::user()->canCreateOrEdit(ENTITY_INVOICE, $invoice))--}}
 			if ($('#saveButton').is(':disabled')) {
 				return false;
 			}
@@ -1500,16 +1503,16 @@
 					NINJA.formIsChanged = false;
 					location.href = data;
 				} else {
-				console.log(data);
 					handleSaveFailed();
 				}
             }).fail(function(data) {
+				console.log(data.response);
 				handleSaveFailed(data);
             });
             return false;
-        @else
-            return false;
-        @endif
+			{{--@else--}}
+            //return false;
+			{{--@endif--}}
     }
 
 	function handleSaveFailed(data) {
@@ -1587,15 +1590,15 @@
     	function onPaymentClick() {
             @if (!empty($autoBillChangeWarning))
                 sweetConfirm(function() {
-                    window.location = '{{ URL::to('payments/create/' . $invoice->client->public_id . '/' . $invoice->public_id ) }}';
+                    window.location = '{{ URL::to('payments/create/' . $invoice->vendor->public_id . '/' . $invoice->public_id ) }}';
                 }, {!! json_encode(trans('texts.warn_change_auto_bill')) !!});
             @else
-                window.location = '{{ URL::to('payments/create/' . $invoice->client->public_id . '/' . $invoice->public_id ) }}';
+                window.location = '{{ URL::to('payments/create/' . $invoice->vendor->public_id . '/' . $invoice->public_id ) }}';
             @endif
     	}
 
     	function onCreditClick() {
-    		window.location = '{{ URL::to('credits/create/' . $invoice->client->public_id . '/' . $invoice->public_id ) }}';
+    		window.location = '{{ URL::to('credits/create/' . $invoice->vendor->public_id . '/' . $invoice->public_id ) }}';
     	}
     @endif
 
@@ -1710,11 +1713,11 @@
         number = number.replace('{$clientCustom1}', client.custom_value1 ? client.custom_value1 : '');
         number = number.replace('{$clientCustom2}', client.custom_value2 ? client.custom_value1 : '');
         number = number.replace('{$clientIdNumber}', client.id_number ? client.id_number : '');
-		@if ($invoice->isQuote() && ! $account->share_counter)
-			number = number.replace('{$clientCounter}', pad(client.quote_number_counter, {{ $account->invoice_number_padding }}));
-		@else
+		// {{--@if ($invoice->isQuote() && ! $account->share_counter)--}}
+		// 	number = number.replace('{$clientCounter}', pad(client.quote_number_counter, {{ $account->invoice_number_padding }}));
+		// {{--@else--}}
         	number = number.replace('{$clientCounter}', pad(client.invoice_number_counter, {{ $account->invoice_number_padding }}));
-		@endif
+		// {{--@endif--}}
 		// backwards compatibility
 		number = number.replace('{$custom1}', client.custom_value1 ? client.custom_value1 : '');
         number = number.replace('{$custom2}', client.custom_value2 ? client.custom_value1 : '');

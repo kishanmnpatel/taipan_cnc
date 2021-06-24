@@ -241,57 +241,12 @@ class PurchaseOrderPresenter extends EntityPresenter
         $invoice = $this->entity;
         $entityType = $invoice->getEntityType();
 
-        $actions = [
-            ['url' => 'javascript:onCloneInvoiceClick()', 'label' => trans("texts.clone_invoice")]
-        ];
+        $actions = [];
 
-        if (Auth::user()->can('create', ENTITY_QUOTE)) {
-            $actions[] = ['url' => 'javascript:onCloneQuoteClick()', 'label' => trans("texts.clone_quote")];
-        }
+        
 
-        $actions[] = ['url' => url("{$entityType}s/{$entityType}_history/{$invoice->public_id}"), 'label' => trans('texts.view_history')];
+        // $actions[] = DropdownButton::DIVIDER;
 
-        if ($entityType == ENTITY_INVOICE) {
-            $actions[] = ['url' => url("invoices/delivery_note/{$invoice->public_id}"), 'label' => trans('texts.delivery_note')];
-        }
-
-        $actions[] = DropdownButton::DIVIDER;
-
-        if ($entityType == ENTITY_QUOTE) {
-            if ($invoice->quote_invoice_id) {
-                $actions[] = ['url' => url("invoices/{$invoice->quote_invoice_id}/edit"), 'label' => trans('texts.view_invoice')];
-            } else {
-                if (! $invoice->isApproved()) {
-                    $actions[] = ['url' => url("proposals/create/{$invoice->public_id}"), 'label' => trans('texts.new_proposal')];
-                }
-                $actions[] = ['url' => 'javascript:onConvertClick()', 'label' => trans('texts.convert_to_invoice')];
-            }
-        } elseif ($entityType == ENTITY_INVOICE) {
-            if ($invoice->quote_id && $invoice->quote) {
-                $actions[] = ['url' => url("quotes/{$invoice->quote->public_id}/edit"), 'label' => trans('texts.view_quote')];
-            }
-
-            if ($invoice->onlyHasTasks()) {
-                $actions[] = ['url' => 'javascript:onAddItemClick()', 'label' => trans('texts.add_product')];
-            }
-
-            if ($invoice->canBePaid()) {
-                $actions[] = ['url' => 'javascript:submitBulkAction("markPaid")', 'label' => trans('texts.mark_paid')];
-                $actions[] = ['url' => 'javascript:onPaymentClick()', 'label' => trans('texts.enter_payment')];
-            }
-
-            foreach ($invoice->payments as $payment) {
-                $label = trans('texts.view_payment');
-                if ($invoice->payments->count() > 1) {
-                    $label .= ' - ' . $invoice->account->formatMoney($payment->amount, $invoice->client);
-                }
-                $actions[] = ['url' => $payment->present()->url, 'label' => $label];
-            }
-        }
-
-        if (count($actions) > 3) {
-            $actions[] = DropdownButton::DIVIDER;
-        }
 
         if (! $invoice->trashed()) {
             $actions[] = ['url' => 'javascript:onArchiveClick()', 'label' => trans("texts.archive_{$entityType}")];

@@ -20,9 +20,11 @@ class PurchaseOrderDatatable extends EntityDatatable
             [
                 $entityType == ENTITY_PURCHASE_ORDER ? 'purchase_order_number' : 'quote_number',
                 function ($model) use ($entityType) {
+                    // dd($model);
                     if(Auth::user()->viewModel($model, $entityType)) {
-                        $str = link_to("{$entityType}s/{$model->public_id}/edit", $model->invoice_number, ['class' => Utils::getEntityRowClass($model)])->toHtml();
-                        return $this->addNote($str, $model->private_notes);
+                        $str = link_to("purchase_orders/{$model->public_id}/edit", $model->invoice_number, ['class' => Utils::getEntityRowClass($model)])->toHtml();
+                        // return $this->addNote($str, $model->public_notes);
+                        return $str;
                     }
                     else
                         return $model->invoice_number;
@@ -34,7 +36,7 @@ class PurchaseOrderDatatable extends EntityDatatable
                 'supplier_name',
                 function ($model) {
                     if(Auth::user()->can('view', [ENTITY_VENDOR, $model]))
-                        return link_to("clients/{$model->client_public_id}", Utils::getClientDisplayName($model))->toHtml();
+                        return link_to("vendors/{$model->vendor_public_id}", Utils::getVendorDisplayName($model))->toHtml();
                     else
                         return Utils::getClientDisplayName($model);
 
@@ -53,18 +55,18 @@ class PurchaseOrderDatatable extends EntityDatatable
                     return Utils::formatMoney($model->amount, $model->currency_id, $model->country_id);
                 },
             ],
-            [
-                'balance',
-                function ($model) {
-                    return $model->partial > 0 ?
-                        trans('texts.partial_remaining', [
-                            'partial' => Utils::formatMoney($model->partial, $model->currency_id, $model->country_id),
-                            'balance' => Utils::formatMoney($model->balance, $model->currency_id, $model->country_id), ]
-                        ) :
-                        Utils::formatMoney($model->balance, $model->currency_id, $model->country_id);
-                },
-                $entityType == ENTITY_PURCHASE_ORDER,
-            ],
+            // [
+            //     'balance',
+            //     function ($model) {
+            //         return $model->partial > 0 ?
+            //             trans('texts.partial_remaining', [
+            //                 'partial' => Utils::formatMoney($model->partial, $model->currency_id, $model->country_id),
+            //                 'balance' => Utils::formatMoney($model->balance, $model->currency_id, $model->country_id), ]
+            //             ) :
+            //             Utils::formatMoney($model->balance, $model->currency_id, $model->country_id);
+            //     },
+            //     $entityType == ENTITY_PURCHASE_ORDER,
+            // ],
             [
                 $entityType == ENTITY_PURCHASE_ORDER ? 'due_date' : 'valid_until',
                 function ($model) {
@@ -81,7 +83,7 @@ class PurchaseOrderDatatable extends EntityDatatable
             [
                 'status',
                 function ($model) use ($entityType) {
-                    return $model->quote_invoice_id ? link_to("invoices/{$model->quote_invoice_id}/edit", trans('texts.converted'))->toHtml() : self::getStatusLabel($model);
+                    return self::getStatusLabel($model);
                 },
             ],
         ];
@@ -93,109 +95,20 @@ class PurchaseOrderDatatable extends EntityDatatable
 
         return [
             [
-                trans("texts.clone_invoice"),
-                function ($model) {
-                    return URL::to("invoices/{$model->public_id}/clone");
-                },
-                function ($model) {
-                    return Auth::user()->can('create', ENTITY_INVOICE);
-                },
-            ],
-            [
-                trans("texts.clone_quote"),
-                function ($model) {
-                    return URL::to("quotes/{$model->public_id}/clone");
-                },
-                function ($model) {
-                    return Auth::user()->can('create', ENTITY_QUOTE);
-                },
-            ],
-            [
-                trans("texts.{$entityType}_history"),
-                function ($model) use ($entityType) {
-                    return URL::to("{$entityType}s/{$entityType}_history/{$model->public_id}");
-                },
-            ],
-            [
-                trans('texts.delivery_note'),
-                function ($model) use ($entityType) {
-                    return url("invoices/delivery_note/{$model->public_id}");
-                },
-                function ($model) use ($entityType) {
-                    return $entityType == ENTITY_INVOICE;
-                },
-            ],
-            [
-                '--divider--', function () {
-                    return false;
-                },
-                function ($model) {
-                    return Auth::user()->canCreateOrEdit(ENTITY_INVOICE);
-                },
-            ],
-            [
-                trans('texts.mark_sent'),
-                function ($model) use ($entityType) {
-                    return "javascript:submitForm_{$entityType}('markSent', {$model->public_id})";
-                },
-                function ($model) {
-                    return ! $model->is_public && Auth::user()->can('edit', [ENTITY_INVOICE, $model]);
-                },
-            ],
-            [
-                trans('texts.mark_paid'),
-                function ($model) use ($entityType) {
-                    return "javascript:submitForm_{$entityType}('markPaid', {$model->public_id})";
-                },
-                function ($model) use ($entityType) {
-                    return $entityType == ENTITY_INVOICE && $model->invoice_status_id != INVOICE_STATUS_PAID && Auth::user()->can('edit', [ENTITY_INVOICE, $model]);
-                },
-            ],
-            [
-                trans('texts.enter_payment'),
-                function ($model) {
-                    return URL::to("payments/create/{$model->client_public_id}/{$model->public_id}");
-                },
-                function ($model) use ($entityType) {
-                    return $entityType == ENTITY_INVOICE && $model->invoice_status_id != INVOICE_STATUS_PAID && Auth::user()->can('create', ENTITY_PAYMENT);
-                },
-            ],
-            [
                 trans('texts.view_invoice'),
                 function ($model) {
-                    return URL::to("invoices/{$model->quote_invoice_id}/edit");
+                    return URL::to("purchase_orders/{$model->public_id}/edit");
                 },
-                function ($model) use ($entityType) {
-                    return $entityType == ENTITY_QUOTE && $model->quote_invoice_id && Auth::user()->can('view', [ENTITY_INVOICE, $model]);
-                },
-            ],
-            [
-                trans('texts.new_proposal'),
-                function ($model) {
-                    return URL::to("proposals/create/{$model->public_id}");
-                },
-                function ($model) use ($entityType) {
-                    return $entityType == ENTITY_QUOTE && ! $model->quote_invoice_id && $model->invoice_status_id < INVOICE_STATUS_APPROVED && Auth::user()->can('create', ENTITY_PROPOSAL);
-                },
-            ],
-            [
-                trans('texts.convert_to_invoice'),
-                function ($model) {
-                    return "javascript:submitForm_quote('convert', {$model->public_id})";
-                },
-                function ($model) use ($entityType) {
-                    return $entityType == ENTITY_QUOTE && ! $model->quote_invoice_id && Auth::user()->can('edit', [ENTITY_INVOICE, $model]);
-                },
-            ],
+            ]
         ];
     }
 
     private function getStatusLabel($model)
     {
-        $class = Invoice::calcStatusClass($model->invoice_status_id, $model->balance, $model->partial_due_date ?: $model->due_date_sql, $model->is_recurring);
-        $label = Invoice::calcStatusLabel($model->invoice_status_name, $class, $this->entityType, $model->quote_invoice_id);
+        $class = Invoice::calcStatusClass($model->invoice_status_id, $model->balance, $model->partial_due_date ?: $model->due_date_sql, false);
+        $label = Invoice::calcStatusLabel($model->invoice_status_name, $class, $this->entityType, false);
 
-        return "<h4><div class=\"label label-{$class}\">$label</div></h4>";
+        return "<h4><div class=\"label label-default\">Draft</div></h4>";
     }
 
     public function bulkActions()

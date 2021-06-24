@@ -1,5 +1,13 @@
 <?php
 
+use Illuminate\Support\Facades\Session;
+if (Session::get('balance_to_be_paid')) {
+    $balance_due='Balance to be paid';
+    Session::forget('balance_to_be_paid');
+}else{
+    $balance_due='Balance Due';
+    Session::forget('balance_to_be_paid');
+}
 $LANG = array(
     'organization' => 'Organization',
     'name' => 'Name',
@@ -42,7 +50,7 @@ $LANG = array(
     'line_total' => 'Line Total',
     'subtotal' => 'Subtotal',
     'paid_to_date' => 'Paid to Date',
-    'balance_due' => 'Balance Due',
+    'balance_due' => $balance_due,
     'invoice_design_id' => 'Design',
     'terms' => 'Terms',
     'your_invoice' => 'Your Invoice',
@@ -294,7 +302,17 @@ $LANG = array(
     'products' => 'Products',
     'raw_materials' => 'Raw Materials',
     'purchase_orders' => 'Purchase Orders',
+    'archive_purchase_order' => 'Archive Purchase Order',
+    'delete_purchase_order' => 'Delete Purchase Order',
+    'deleted_purchase_order' => 'Successfully deleted purchase order',
+    'deleted_purchase_orders' => 'Successfully deleted :count purchase orders',
+    'archived_purchase_order' => 'Successfully archived purchase order',
+    'archived_purchase_orders' => 'Successfully archived :count purchase orders',
+    'restore_purchase_order' => 'Restore Purchase order',
+    'restored_purchase_order' => 'Restored Purchase order',
+    'balance_to_be_paid' => 'Balance to be paid',
     'new_purchase_order' => 'New Purchase Orders',
+    'edit_purchase_order' => 'Edit Purchase Orders',
     'purchase_order_number' => 'Purchase Order Number',
     'supplier_name' => 'Supplier Name',
     'email_purchase_order'=>'Email Purchase Order',

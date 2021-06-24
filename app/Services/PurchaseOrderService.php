@@ -7,7 +7,7 @@ use App\Models\Client;
 use App\Models\Invitation;
 use App\Models\Invoice;
 use App\Ninja\Datatables\PurchaseOrderDatatable;
-use App\Ninja\Repositories\ClientRepository;
+use App\Ninja\Repositories\VendorRepository;
 use App\Ninja\Repositories\PurchaseOrderRepository;
 use App\Jobs\DownloadInvoices;
 use Auth;
@@ -16,7 +16,7 @@ use Utils;
 class PurchaseOrderService extends BaseService
 {
     /**
-     * @var ClientRepository
+     * @var VendorRepository
      */
     protected $clientRepo;
 
@@ -33,12 +33,12 @@ class PurchaseOrderService extends BaseService
     /**
      * InvoiceService constructor.
      *
-     * @param ClientRepository  $clientRepo
+     * @param VendorRepository  $clientRepo
      * @param PurchaseOrderRepository $purchaseOrderRepository
      * @param DatatableService  $datatableService
      */
     public function __construct(
-        ClientRepository $clientRepo,
+        VendorRepository $clientRepo,
         PurchaseOrderRepository $purchaseOrderRepository,
         DatatableService $datatableService
     ) {
@@ -156,12 +156,13 @@ class PurchaseOrderService extends BaseService
         $datatable = new PurchaseOrderDatatable(true, $clientPublicId);
         $datatable->entityType = $entityType;
 
-        $query = $this->purchaseOrderRepository->getInvoices($accountId, $clientPublicId, $entityType, $search)
-                    ->where('invoices.invoice_type_id', '=', $entityType == ENTITY_QUOTE ? INVOICE_TYPE_QUOTE : INVOICE_TYPE_STANDARD);
+        $query = $this->purchaseOrderRepository->getInvoices($accountId, $clientPublicId, $entityType, $search);
+                    // ->where('purchase_orders.invoice_type_id', '=', $entityType == ENTITY_QUOTE ? INVOICE_TYPE_QUOTE : INVOICE_TYPE_STANDARD);
 
-        if (! Utils::hasPermission('view_' . $entityType)) {
-            $query->where('invoices.user_id', '=', Auth::user()->id);
-        }
+        // if (! Utils::hasPermission('view_' . $entityType)) {
+            $query->where('purchase_orders.user_id', '=', Auth::user()->id);
+        // }
+        // dd($query->wheres);
         return $this->datatableService->createDatatable($datatable, $query);
     }
 }

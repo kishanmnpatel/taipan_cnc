@@ -210,6 +210,7 @@ Route::group(['middleware' => ['lookup:user', 'auth:user']], function () {
 
     Route::resource('purchase_orders', 'PurchaseOrderController');
     Route::get('api/purchase_orders/{client_id?}', 'PurchaseOrderController@getDatatable');
+    Route::post('purchase_orders/bulk', 'PurchaseOrderController@bulk');
 
     Route::get('recurring_expenses', 'RecurringExpenseController@index');
     Route::get('api/recurring_expenses', 'RecurringExpenseController@getDatatable');

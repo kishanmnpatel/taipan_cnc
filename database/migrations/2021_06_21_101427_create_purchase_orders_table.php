@@ -18,11 +18,11 @@ class CreatePurchaseOrdersTable extends Migration
             $table->unsignedInteger('vendor_id')->index();
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('account_id')->index();
-            $table->unsignedInteger('purchase_order_status_id')->default(1);
+            $table->unsignedInteger('invoice_status_id')->default(1);
 
-            $table->string('purchase_order_number');
-            $table->string('quote_number');
-            $table->date('purchase_order_date')->nullable();
+            $table->string('invoice_number');
+            $table->string('po_number');
+            $table->date('invoice_date')->nullable();
             $table->date('due_date')->nullable();
             $table->text('terms')->nullable();
             $table->text('public_notes');
@@ -38,15 +38,15 @@ class CreatePurchaseOrdersTable extends Migration
             $table->decimal('amount', 15, 2);
             $table->decimal('balance', 15, 2);
 
-            $table->foreign('vendor_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade');
             $table->foreign('account_id')->references('id')->on('accounts')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('purchase_order_status_id')->references('id')->on('invoice_statuses');
+            $table->foreign('invoice_status_id')->references('id')->on('invoice_statuses');
 
             $table->unsignedInteger('public_id')->index();
             $table->unique(['account_id', 'public_id']);
-            $table->unsignedInteger('purchase_order_design_id')->default(1);
-            $table->foreign('purchase_order_design_id')->references('id')->on('invoice_designs');
+            $table->unsignedInteger('invoice_design_id')->default(1);
+            $table->foreign('invoice_design_id')->references('id')->on('invoice_designs');
             $table->unsignedInteger('quote_id')->nullable();
             $table->unsignedInteger('quote_purchase_order_id')->nullable();
             $table->decimal('custom_value1', 15, 2)->default(0);

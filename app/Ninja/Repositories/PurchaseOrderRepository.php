@@ -2,25 +2,26 @@
 
 namespace App\Ninja\Repositories;
 
+use DB;
+use Auth;
+use Utils;
+use App\Models\Task;
+use App\Models\Client;
+use App\Models\Account;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\Document;
+use App\Models\Invitation;
+use App\Models\GatewayType;
+use App\Models\InvoiceItem;
+use App\Models\PurchaseOrder;
+use App\Jobs\SendInvoiceEmail;
+use App\Services\PaymentService;
 use App\Events\QuoteItemsWereCreated;
 use App\Events\QuoteItemsWereUpdated;
 use App\Events\InvoiceItemsWereCreated;
 use App\Events\InvoiceItemsWereUpdated;
-use App\Jobs\SendInvoiceEmail;
-use App\Models\Account;
-use App\Models\Client;
-use App\Models\Document;
-use App\Models\Expense;
-use App\Models\Invitation;
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\Product;
-use App\Models\Task;
-use App\Models\GatewayType;
-use App\Services\PaymentService;
-use Auth;
-use DB;
-use Utils;
 
 class PurchaseOrderRepository extends BaseRepository
 {
@@ -28,7 +29,7 @@ class PurchaseOrderRepository extends BaseRepository
 
     public function getClassName()
     {
-        return 'App\Models\Invoice';
+        return 'App\Models\PurchaseOrder';
     }
 
     public function __construct(PaymentService $paymentService, DocumentRepository $documentRepo, PaymentRepository $paymentRepo)
@@ -40,61 +41,44 @@ class PurchaseOrderRepository extends BaseRepository
 
     public function all()
     {
-        return Invoice::scope()
-                ->invoiceType(INVOICE_TYPE_STANDARD)
-                ->with('user', 'client.contacts', 'invoice_status')
+        return PurchaseOrder::scope()
+                ->with('user', 'invoice_status')
                 ->withTrashed()
-                ->where('is_recurring', '=', false)
                 ->get();
     }
 
     public function getInvoices($accountId, $clientPublicId = false, $entityType = ENTITY_INVOICE, $filter = false)
     {
-        $query = DB::table('invoices')
-            ->join('accounts', 'accounts.id', '=', 'invoices.account_id')
-            ->join('clients', 'clients.id', '=', 'invoices.client_id')
-            ->join('invoice_statuses', 'invoice_statuses.id', '=', 'invoices.invoice_status_id')
-            ->join('contacts', 'contacts.client_id', '=', 'clients.id')
-            ->where('invoices.account_id', '=', $accountId)
-            ->where('contacts.deleted_at', '=', null)
-            ->where('invoices.is_recurring', '=', false)
-            ->where('contacts.is_primary', '=', true)
-            //->whereRaw('(clients.name != "" or contacts.first_name != "" or contacts.last_name != "" or contacts.email != "")') // filter out buy now invoices
+        $query = DB::table('purchase_orders')
+            ->join('accounts', 'accounts.id', '=', 'purchase_orders.account_id')
+            ->join('vendors', 'vendors.id', '=', 'purchase_orders.vendor_id')
+            ->join('invoice_statuses', 'invoice_statuses.id', '=', 'purchase_orders.invoice_status_id')
+            ->where('purchase_orders.account_id', '=', $accountId)
+            //->whereRaw('(clients.name != "" or contacts.first_name != "" or contacts.last_name != "" or contacts.email != "")') // filter out buy now purchase_orders
             ->select(
-                DB::raw('COALESCE(clients.currency_id, accounts.currency_id) currency_id'),
-                DB::raw('COALESCE(clients.country_id, accounts.country_id) country_id'),
-                'clients.public_id as client_public_id',
-                'clients.user_id as client_user_id',
+                DB::raw('COALESCE(vendors.currency_id, accounts.currency_id) currency_id'),
+                DB::raw('COALESCE(vendors.country_id, accounts.country_id) country_id'),
+                'vendors.public_id as vendor_public_id',
+                'vendors.user_id as vendor_user_id',
                 'invoice_number',
                 'invoice_number as quote_number',
                 'invoice_status_id',
-                DB::raw("COALESCE(NULLIF(clients.name,''), NULLIF(CONCAT(contacts.first_name, ' ', contacts.last_name),''), NULLIF(contacts.email,'')) client_name"),
-                'invoices.public_id',
-                'invoices.amount',
-                'invoices.balance',
-                'invoices.invoice_date',
-                'invoices.due_date as due_date_sql',
-                'invoices.partial_due_date',
-                DB::raw("CONCAT(invoices.invoice_date, invoices.created_at) as date"),
-                DB::raw("CONCAT(COALESCE(invoices.partial_due_date, invoices.due_date), invoices.created_at) as due_date"),
-                DB::raw("CONCAT(COALESCE(invoices.partial_due_date, invoices.due_date), invoices.created_at) as valid_until"),
-                'invoice_statuses.name as status',
+                DB::raw("COALESCE(NULLIF(vendors.name,'')) as vendor_name"),
+                'purchase_orders.public_id',
+                'purchase_orders.amount',
+                'purchase_orders.balance',
+                'purchase_orders.invoice_date',
+                'purchase_orders.due_date as due_date_sql',
+                'purchase_orders.partial_due_date',
+                DB::raw("CONCAT(purchase_orders.invoice_date, purchase_orders.created_at) as date"),
+                'purchase_orders.quote_id',
+                'purchase_orders.deleted_at',
+                'purchase_orders.is_deleted',
                 'invoice_statuses.name as invoice_status_name',
-                'contacts.first_name',
-                'contacts.last_name',
-                'contacts.email',
-                'invoices.quote_id',
-                'invoices.quote_invoice_id',
-                'invoices.deleted_at',
-                'invoices.is_deleted',
-                'invoices.partial',
-                'invoices.user_id',
-                'invoices.is_public',
-                'invoices.is_recurring',
-                'invoices.private_notes'
+                'purchase_orders.partial',
+                'purchase_orders.user_id',
             );
-
-        $this->applyFilters($query, $entityType, ENTITY_INVOICE);
+        $this->applyFilters($query, $entityType, ENTITY_PURCHASE_ORDER);
 
         if ($statuses = session('entity_status_filter:' . $entityType)) {
             $statuses = explode(',', $statuses);
@@ -107,33 +91,30 @@ class PurchaseOrderRepository extends BaseRepository
                 }
                 if (in_array(INVOICE_STATUS_UNPAID, $statuses)) {
                     $query->orWhere(function ($query) use ($statuses) {
-                        $query->where('invoices.balance', '>', 0)
-                              ->where('invoices.is_public', '=', true);
+                        $query->where('purchase_orders.balance', '>', 0)
+                              ->where('purchase_orders.is_public', '=', true);
                     });
                 }
                 if (in_array(INVOICE_STATUS_OVERDUE, $statuses)) {
                     $query->orWhere(function ($query) use ($statuses) {
-                        $query->where('invoices.balance', '>', 0)
-                              ->where('invoices.due_date', '<', date('Y-m-d'))
-                              ->where('invoices.is_public', '=', true);
+                        $query->where('purchase_orders.balance', '>', 0)
+                              ->where('purchase_orders.due_date', '<', date('Y-m-d'))
+                              ->where('purchase_orders.is_public', '=', true);
                     });
                 }
             });
         }
 
         if ($clientPublicId) {
-            $query->where('clients.public_id', '=', $clientPublicId);
+            $query->where('vendors.public_id', '=', $clientPublicId);
         } else {
-            $query->whereNull('clients.deleted_at');
+            $query->whereNull('vendors.deleted_at');
         }
 
         if ($filter) {
             $query->where(function ($query) use ($filter) {
-                $query->where('clients.name', 'like', '%'.$filter.'%')
-                      ->orWhere('invoices.invoice_number', 'like', '%'.$filter.'%')
-                      ->orWhere('contacts.first_name', 'like', '%'.$filter.'%')
-                      ->orWhere('contacts.last_name', 'like', '%'.$filter.'%')
-                      ->orWhere('contacts.email', 'like', '%'.$filter.'%');
+                $query->where('vendors.name', 'like', '%'.$filter.'%')
+                      ->orWhere('purchase_orders.invoice_number', 'like', '%'.$filter.'%');
             });
         }
 

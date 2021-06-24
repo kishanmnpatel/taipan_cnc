@@ -1047,17 +1047,31 @@ ko.bindingHandlers.productTypeahead = {
                         + _.escape(item.notes.substring(0, 100)) + '</div>' }
                 },
                 source: searchData(allBindings.items, allBindings.key, false, 'notes'),
+            @elseif(request()->route()->getName() == 'purchase_orders.create')
+                templates: {
+                        suggestion: function(item) { 
+                            console.log(item.supplier);
+                            // console.log(selectedClientId);
+                            if (selectedClientId == item.supplier) {
+                                return '<div title="' + _.escape(item.notes) + '" style="border-bottom: solid 1px #CCC">'
+                                + _.escape(item.raw_material_key) + '</div>';
+                            }else{
+                                return '<div title="" style="border-bottom: solid 1px #CCC;display:none">NO data</div>';
+                            }
+                        }
+                    },
+                source: searchData(allBindings.items, allBindings.key),
             @else
                 templates: {
                     suggestion: function(item) { 
                         console.log(item.supplier);
                         // console.log(selectedClientId);
-                        if (selectedClientId == item.supplier) {
+                        // if (selectedClientId == item.supplier) {
                             return '<div title="' + _.escape(item.notes) + '" style="border-bottom: solid 1px #CCC">'
                             + _.escape(item.raw_material_key) + '</div>';
-                        }else{
-                            return '<div title="" style="border-bottom: solid 1px #CCC;display:none">NO data</div>';
-                        }
+                        // }else{
+                        //     return '<div title="" style="border-bottom: solid 1px #CCC;display:none">NO data</div>';
+                        // }
                     }
                 },
                 source: searchData(allBindings.items, allBindings.key),

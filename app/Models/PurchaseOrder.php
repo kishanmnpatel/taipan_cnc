@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PurchaseOrder extends EntityModel
 {
     use PresentableTrait,SoftDeletes;
+    use OwnedByClientTrait;
+
+    protected $with=['vendor','invoice_items'];
     /**
      * @var array
      */
@@ -57,9 +60,22 @@ class PurchaseOrder extends EntityModel
     /**
      * @return mixed
      */
-    public function purchase_order_items()
+    public function invoice_items()
     {
         return $this->hasMany('App\Models\PurchaseOrderItem')->orderBy('id');
+    }
+
+    /**
+     * @return mixed
+     */
+    public function vendor()
+    {
+        return $this->belongsTo('App\Models\Vendor')->withTrashed();
+    }
+
+    public function isSent()
+    {
+        return false;
     }
     
 }
