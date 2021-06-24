@@ -334,31 +334,31 @@
 				<td style="text-align: right"><span data-bind="text: totals.subtotal"/></td>
 			</tr>
 
-			<tr style="display:none" data-bind="visible: discount() != 0">
+			{{-- <tr style="display:none" data-bind="visible: discount() != 0">
 				<td colspan="2">{{ trans('texts.discount') }}</td>
 				<td style="text-align: right"><span data-bind="text: totals.discounted"/></td>
-			</tr>
+			</tr> --}}
 
 			@if ($account->customLabel('invoice1') && $invoice->custom_taxes1)
-				<tr>
+				{{-- <tr>
 					<td colspan="2">{{ $account->customLabel('invoice1') ?: trans('texts.surcharge') }}</td>
 					<td><input name="custom_value1" class="form-control" data-bind="value: custom_value1, valueUpdate: 'afterkeydown'"/></td>
-				</tr>
+				</tr> --}}
 			@endif
             @if ($account->customLabel('invoice2') && $invoice->custom_taxes2)
-				<tr>
+				{{-- <tr>
 					<td colspan="2">{{ $account->customLabel('invoice2') ?: trans('texts.surcharge') }}</td>
 					<td><input name="custom_value2" class="form-control" data-bind="value: custom_value2, valueUpdate: 'afterkeydown'"/></td>
-				</tr>
+				</tr> --}}
 			@endif
 
-            <tr style="display:none" data-bind="visible: $root.invoice_item_taxes.show &amp;&amp; totals.hasItemTaxes">
+            {{-- <tr style="display:none" data-bind="visible: $root.invoice_item_taxes.show &amp;&amp; totals.hasItemTaxes">
                 <td>{{ trans('texts.tax') }}&nbsp;&nbsp;</td>
                 <td style="min-width:120px"><span data-bind="html: totals.itemTaxRates"/></td>
                 <td style="text-align: right"><span data-bind="html: totals.itemTaxAmounts"/></td>
-            </tr>
+            </tr> --}}
 
-			<tr style="display:none" data-bind="visible: $root.invoice_taxes.show">
+			{{-- <tr style="display:none" data-bind="visible: $root.invoice_taxes.show">
 				<td>{{ trans('texts.tax') }}&nbsp;&nbsp;</td>
 				<td style="min-width:120px">
                     {!! Former::select('')
@@ -382,20 +382,20 @@
                     <input type="text" name="tax_rate2" data-bind="value: tax_rate2" style="display:none">
                 </td>
 				<td style="text-align: right"><span data-bind="text: totals.taxAmount"/></td>
-			</tr>
+			</tr> --}}
 
             @if ($account->customLabel('invoice1') && !$invoice->custom_taxes1)
-				<tr>
+				{{-- <tr>
 					<td colspan="2">{{ $account->customLabel('invoice1') ?: trans('texts.surcharge') }}</td>
 					<td><input name="custom_value1" class="form-control" data-bind="value: custom_value1, valueUpdate: 'afterkeydown'"/></td>
-				</tr>
+				</tr> --}}
 			@endif
 
             @if ($account->customLabel('invoice2') && !$invoice->custom_taxes2)
-				<tr>
+				{{-- <tr>
 					<td colspan="2">{{ $account->customLabel('invoice2') ?: trans('texts.surcharge') }}</td>
 					<td><input name="custom_value2" class="form-control" data-bind="value: custom_value2, valueUpdate: 'afterkeydown'"/></td>
-				</tr>
+				</tr> --}}
 			@endif
 
 			@if (!$account->hide_paid_to_date)
